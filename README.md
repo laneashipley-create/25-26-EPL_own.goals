@@ -65,6 +65,30 @@ The trial API key allows **1 request/second**. `step3_fetch_timelines.py` enforc
 
 ---
 
+---
+
+## GitHub Pages & Weekly Email
+
+The report is hosted at **https://laneashipley-create.github.io/25-26-EPL_own.goals/report.html**.
+
+### Enabling GitHub Pages
+
+1. Repo **Settings** → **Pages**
+2. **Source**: Deploy from a branch
+3. **Branch**: `main` / root (`/`)
+4. **Save** — the report will be live within a few minutes
+
+### Weekly Email (Brevo)
+
+After the Wednesday workflow runs, an email is sent to `l.shipley@sportradar.com` via Brevo.
+
+**Setup:**
+1. Add **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+2. Name: `BREVO_API_KEY`, Value: your [Brevo API key](https://app.brevo.com/settings/keys/api)
+3. Ensure `sportsdata@keepstagecoachfree.com` is verified in your Brevo account
+
+---
+
 ## Data Notes
 
 - **`data/schedule.csv`**: Includes all 393 matches (261 completed, 132 upcoming as of project start). Statuses: `closed`/`ended` = completed.

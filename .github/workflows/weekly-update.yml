@@ -42,3 +42,16 @@ jobs:
             git commit -m "chore: weekly own goals report update [skip ci]"
             git push
           fi
+
+      - name: Send email notification via Brevo
+        env:
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+        run: |
+          REPORT_URL="https://laneashipley-create.github.io/25-26-EPL_own.goals/report.html"
+          BODY=$(jq -n \
+            --arg url "$REPORT_URL" \
+            '{sender: {name: "EPL Own Goals", email: "sportsdata@keepstagecoachfree.com"}, to: [{email: "l.shipley@sportradar.com"}], subject: "EPL Own Goals Report — Weekly Update", htmlContent: ("<p>Your weekly EPL own goals report has been updated.</p><p><a href=\"" + $url + "\">View the report</a></p>")}')
+          curl -s -X POST "https://api.brevo.com/v3/smtp/email" \
+            -H "api-key: $BREVO_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$BODY"
