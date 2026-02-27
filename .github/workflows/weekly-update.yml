@@ -50,7 +50,7 @@ jobs:
           REPORT_URL="https://laneashipley-create.github.io/25-26-EPL_own.goals/report.html"
           BODY=$(jq -n \
             --arg url "$REPORT_URL" \
-            '{sender: {name: "EPL Own Goals", email: "sportsdata@keepstagecoachfree.com"}, to: [{email: "l.shipley@sportradar.com"}], subject: "EPL Own Goals Report — Weekly Update", htmlContent: ("<p>Your weekly EPL own goals report has been updated.</p><p><a href=\"" + $url + "\">View the report</a></p>")}')
+            '{sender: {name: "EPL Own Goals", email: "sportsdata@keepstagecoachfree.com"}, to: [{email: "l.shipley@sportradar.com"}, {email: "m.moser@sportradar.com"}, {email: "n.masterson@sportradar.com", name: "Nicole Masterson"}, {email: "v.gupta@sportradar.com", name: "Vishaal Gupta"}, {email: "m.byrnes@sportradar.com", name: "Matt Byrnes"}, {email: "j.herbstman@sportradar.com", name: "Jordan Herbstman"}], subject: "25/26 - EPL Season // Own Goals Report — Weekly Update", htmlContent: ("<p>Esteemed Colleague,</p><p>Your weekly EPL own goals report has been updated.</p><p><a href=\"" + $url + "\">View the report</a></p><p>Kind Regards,</p><p>Lane's SportsData Bot</p>")}')
           curl -s -X POST "https://api.brevo.com/v3/smtp/email" \
             -H "api-key: $BREVO_API_KEY" \
             -H "Content-Type: application/json" \
