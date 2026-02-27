@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.local
+config_local.py
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+
+# Cached API responses (large, re-fetchable)
+data/timelines/

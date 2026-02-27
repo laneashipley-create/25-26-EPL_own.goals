@@ -1,0 +1,1 @@
+# EPL Own Goals — uses Python stdlib only, no pip packages

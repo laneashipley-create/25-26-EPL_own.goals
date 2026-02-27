@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPL Own Goals — Premier League 25/26</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f2ec;
+      color: #1a1a2a;
+      min-height: 100vh;
+      padding-bottom: 3rem;
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    .header {
+      background: linear-gradient(160deg, #1a0000 0%, #2e0000 45%, #1a0000 100%);
+      border-bottom: 3px solid #cc0000;
+      padding: 2rem 1.5rem 1.75rem;
+      text-align: center;
+    }
+    .header-badge {
+      display: inline-block;
+      background: #cc0000;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span { color: #ff6666; }
+    .header .subtitle {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+    .header .subtitle strong { color: #fff; }
+
+    /* ── Stats ────────────────────────────────────────── */
+    .stats-section {
+      max-width: 900px;
+      margin: 2rem auto 0;
+      padding: 0 1rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.75rem;
+    }
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid #ddd8d0;
+      border-radius: 10px;
+      padding: 1rem 0.75rem;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .stat-card:hover { border-color: #cc0000; box-shadow: 0 2px 8px rgba(204,0,0,0.12); }
+    .stat-card--correct { border-color: #b8ddb8; background: #f4fbf4; }
+    .stat-card--correct:hover { border-color: #2a7a2a; box-shadow: 0 2px 8px rgba(42,122,42,0.12); }
+    .stat-card--incorrect { border-color: #f0c0c0; background: #fff5f5; }
+    .stat-card--incorrect:hover { border-color: #cc0000; box-shadow: 0 2px 8px rgba(204,0,0,0.15); }
+    .stat-number {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #cc0000;
+      line-height: 1;
+    }
+    .stat-number--correct  { color: #1a7a1a; }
+    .stat-number--incorrect { color: #cc0000; }
+    .stat-label {
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .stat-sub {
+      display: block;
+      color: #333;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-top: 0.1rem;
+    }
+    .stat-sub--muted { color: #888; font-weight: 400; font-style: italic; }
+
+    /* ── Table section ────────────────────────────────── */
+    .table-section {
+      max-width: 100%;
+      margin: 1.75rem auto 0;
+      padding: 0 1rem;
+    }
+    .table-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .table-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #cc0000;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .sort-hint {
+      font-size: 0.72rem;
+      color: #999;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 8px;
+      border: 1px solid #ddd8d0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    /* ── Table ────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      table-layout: fixed;
+    }
+    col.c-num        { width: 2%; }
+    col.c-match      { width: 13%; }
+    col.c-matchid    { width: 8%; }
+    col.c-scorer     { width: 11%; }
+    col.c-playerid   { width: 8%; }
+    col.c-min        { width: 4%; }
+    col.c-team       { width: 9%; }
+    col.c-score      { width: 5%; }
+    col.c-final      { width: 5%; }
+    col.c-ogmention  { width: 5%; }
+    col.c-commentary { width: 30%; }
+
+    thead tr {
+      background: #1a0000;
+      border-bottom: 2px solid #cc0000;
+    }
+    thead th {
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #ffaaaa;
+      white-space: nowrap;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { background: #2e0000; color: #ffd0d0; }
+    thead th.sorted-asc::after  { content: " ▲"; font-size: 0.6rem; color: #ff8888; }
+    thead th.sorted-desc::after { content: " ▼"; font-size: 0.6rem; color: #ff8888; }
+    thead th.num { text-align: center; cursor: default; }
+    thead th.center { text-align: center; }
+
+    tbody tr { background: #ffffff; transition: background 0.12s; }
+    tbody tr:nth-child(even) { background: #faf7f2; }
+    tbody tr:hover { background: #fff0f0; }
+
+    td {
+      padding: 0.45rem 0.4rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #e8e2d8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    td.num { text-align: center; color: #bbb; font-size: 0.75rem; }
+    td.minute {
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #c07000;
+    }
+    td.score {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: #555;
+    }
+    td.score.final { color: #111; font-weight: 700; }
+
+    .match-name {
+      font-weight: 600;
+      color: #111;
+      white-space: normal;
+      overflow: visible;
+    }
+    .player-name {
+      font-weight: 600;
+      color: #222;
+      white-space: normal;
+      overflow: visible;
+    }
+    .meta {
+      font-size: 0.68rem;
+      color: #999;
+      margin-top: 0.1rem;
+      white-space: normal;
+    }
+    .team-badge {
+      display: inline-block;
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #cc0000;
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .id-cell code {
+      font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+      font-size: 0.68rem;
+      color: #555;
+      background: #f0ede8;
+      border: 1px solid #ddd8d0;
+      border-radius: 3px;
+      padding: 0.15rem 0.35rem;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    td.og-yes { text-align: center; color: #1a7a1a; font-weight: 700; font-size: 0.82rem; }
+    td.og-no  { text-align: center; color: #cc0000; font-weight: 700; font-size: 0.82rem; }
+    .commentary-cell { white-space: normal; max-width: 260px; }
+    .commentary {
+      font-size: 0.75rem;
+      color: #555;
+      font-style: italic;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── Branding ─────────────────────────────────────── */
+    .branding {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      padding: 1.25rem 1rem;
+      border-top: 1px solid #ddd8d0;
+      flex-wrap: wrap;
+    }
+    .branding-label {
+      font-size: 0.72rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+    .branding-logo {
+      height: 120px;
+      display: flex;
+      align-items: center;
+    }
+    .branding-logo svg {
+      height: 120px;
+      width: auto;
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      margin-top: 1rem;
+      color: #aaa;
+      font-size: 0.72rem;
+    }
+    .footer a { color: #cc0000; text-decoration: none; }
+
+    /* ── Mobile card view (portrait phones) ───────────── */
+    @media (max-width: 599px) and (orientation: portrait) {
+      .table-wrap { border: none; background: transparent; box-shadow: none; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tbody tr {
+        background: #ffffff;
+        border: 1px solid #ddd8d0;
+        border-radius: 10px;
+        margin-bottom: 0.85rem;
+        padding: 0.75rem;
+        white-space: normal;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      }
+      tbody tr:nth-child(even) { background: #ffffff; }
+      tbody tr:hover { background: #fff5f5; }
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #e8e2d8;
+        white-space: normal;
+        font-size: 0.82rem;
+      }
+      td:last-child { border-bottom: none; }
+      td::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #cc0000;
+        min-width: 90px;
+        padding-right: 0.5rem;
+        flex-shrink: 0;
+      }
+      td.num { display: none; }
+      .id-cell, .commentary-cell { display: flex; }
+      .id-cell code { font-size: 0.65rem; white-space: normal; word-break: break-all; }
+      .commentary { -webkit-line-clamp: 3; }
+    }
+
+    /* ── Tablet / landscape phone ─────────────────────── */
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 599px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      html { font-size: 13px; }
+      .header h1 { font-size: 1.5rem; }
+      .table-section { padding: 0 0.5rem; }
+    }
+
+    /* Landscape phone — keep table but hide IDs & commentary */
+    @media (max-width: 767px) and (orientation: landscape) {
+      .id-cell, .commentary-cell { display: none; }
+      html { font-size: 12px; }
+    }
+
+    /* Portrait tablet — hide only IDs */
+    @media (min-width: 600px) and (max-width: 899px) and (orientation: portrait) {
+      .id-cell { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-badge">Premier League &middot; 25/26</div>
+    <h1>EPL <span>Own Goals</span> Tracker</h1>
+    <div class="subtitle">
+      <strong>32</strong> own goals scored in the Premier League 25/26 season
+    </div>
+  </div>
+
+  <div class="stats-section">
+    
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">271</div>
+            <div class="stat-label">Matches Reviewed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">36,027</div>
+            <div class="stat-label">Timeline Events Reviewed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">32</div>
+            <div class="stat-label">Own Goals</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">2</div>
+            <div class="stat-label">Most by One Player<br><span class="stat-sub">Maxime Esteve &amp; Yerson Mosquera</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">5</div>
+            <div class="stat-label">Most by One Team<br><span class="stat-sub">Brighton & Hove Albion</span></div>
+          </div>
+          <div class="stat-card stat-card--correct">
+            <div class="stat-number stat-number--correct">21</div>
+            <div class="stat-label">Commentary Correct<br><span class="stat-sub stat-sub--muted">Mentions "own goal"</span></div>
+          </div>
+          <div class="stat-card stat-card--incorrect">
+            <div class="stat-number stat-number--incorrect">11</div>
+            <div class="stat-label">Commentary Incorrect<br><span class="stat-sub stat-sub--muted">No "own goal" mention</span></div>
+          </div>
+        </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header-row">
+      <div class="table-title">All Own Goals &mdash; Premier League 25/26</div>
+      <div class="sort-hint">Click any column header to sort</div>
+    </div>
+    <div class="table-wrap">
+      <table id="og-table">
+        <colgroup>
+          <col class="c-num">
+          <col class="c-match">
+          <col class="c-matchid">
+          <col class="c-scorer">
+          <col class="c-playerid">
+          <col class="c-min">
+          <col class="c-team">
+          <col class="c-score">
+          <col class="c-final">
+          <col class="c-ogmention">
+          <col class="c-commentary">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th data-col="1">Match</th>
+            <th data-col="2">Match ID</th>
+            <th data-col="3">Own Goal Scorer</th>
+            <th data-col="4">Player ID</th>
+            <th class="center" data-col="5">Min</th>
+            <th data-col="6">Benefiting Team</th>
+            <th class="center" data-col="7">Score at OG</th>
+            <th class="center" data-col="8">Final Score</th>
+            <th class="center" data-col="9">Mentions OG?</th>
+            <th data-col="10">Commentary</th>
+          </tr>
+        </thead>
+        <tbody id="og-tbody">
+          
+        <tr>
+          <td class="num" data-val="1" data-label="#">1</td>
+          <td data-val="2025-08-24" data-label="Match">
+            <div class="match-name">Fulham FC vs Manchester United</div>
+            <div class="meta">2025-08-24 &bull; GW2</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300537" data-label="Match ID"><code title="sr:sport_event:61300537">sr:sport_event:61300537</code></td>
+          <td data-val="Muniz, Rodrigo" data-label="Scorer">
+            <div class="player-name">Rodrigo Muniz</div>
+            <div class="meta">Fulham FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1557191" data-label="Player ID"><code title="sr:player:1557191">sr:player:1557191</code></td>
+          <td class="minute" data-val="58" data-label="Min">58'</td>
+          <td data-val="Manchester United" data-label="Benefiting"><div class="team-badge">Manchester United</div></td>
+          <td class="score" data-val="0" data-label="At OG">0–1</td>
+          <td class="score final" data-val="1" data-label="Final">1–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Rodrigo Muniz scores with a header and the away team now lead 0-1." data-label="Commentary"><span class="commentary">Rodrigo Muniz scores with a header and the away team now lead 0-1.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="2" data-label="#">2</td>
+          <td data-val="2025-08-30" data-label="Match">
+            <div class="match-name">Manchester United vs Burnley FC</div>
+            <div class="meta">2025-08-30 &bull; GW3</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300555" data-label="Match ID"><code title="sr:sport_event:61300555">sr:sport_event:61300555</code></td>
+          <td data-val="Cullen, Josh" data-label="Scorer">
+            <div class="player-name">Josh Cullen</div>
+            <div class="meta">Burnley FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:816106" data-label="Player ID"><code title="sr:player:816106">sr:player:816106</code></td>
+          <td class="minute" data-val="27" data-label="Min">27'</td>
+          <td data-val="Manchester United" data-label="Benefiting"><div class="team-badge">Manchester United</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="3" data-label="Final">3–2</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Man Utd take a 1-0 lead through a well-placed header from Josh Cullen." data-label="Commentary"><span class="commentary">Goal! Man Utd take a 1-0 lead through a well-placed header from Josh Cullen.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="3" data-label="#">3</td>
+          <td data-val="2025-09-13" data-label="Match">
+            <div class="match-name">Fulham FC vs Leeds United</div>
+            <div class="meta">2025-09-13 &bull; GW4</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300577" data-label="Match ID"><code title="sr:sport_event:61300577">sr:sport_event:61300577</code></td>
+          <td data-val="Gudmundsson, Gabriel" data-label="Scorer">
+            <div class="player-name">Gabriel Gudmundsson</div>
+            <div class="meta">Leeds United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:971145" data-label="Player ID"><code title="sr:player:971145">sr:player:971145</code></td>
+          <td class="minute" data-val="90" data-label="Min">90+4'</td>
+          <td data-val="Fulham FC" data-label="Benefiting"><div class="team-badge">Fulham FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Own goal! Gabriel Gudmundsson has scored at the wrong end to make it 1-0." data-label="Commentary"><span class="commentary">Own goal! Gabriel Gudmundsson has scored at the wrong end to make it 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="4" data-label="#">4</td>
+          <td data-val="2025-09-20" data-label="Match">
+            <div class="match-name">Fulham FC vs Brentford FC</div>
+            <div class="meta">2025-09-20 &bull; GW5</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300593" data-label="Match ID"><code title="sr:sport_event:61300593">sr:sport_event:61300593</code></td>
+          <td data-val="Pinnock, Ethan" data-label="Scorer">
+            <div class="player-name">Ethan Pinnock</div>
+            <div class="meta">Brentford FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1056935" data-label="Player ID"><code title="sr:player:1056935">sr:player:1056935</code></td>
+          <td class="minute" data-val="50" data-label="Min">50'</td>
+          <td data-val="Fulham FC" data-label="Benefiting"><div class="team-badge">Fulham FC</div></td>
+          <td class="score" data-val="3" data-label="At OG">3–1</td>
+          <td class="score final" data-val="3" data-label="Final">3–1</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="It's now 3-1 thanks to an own goal from Ethan Pinnock." data-label="Commentary"><span class="commentary">It's now 3-1 thanks to an own goal from Ethan Pinnock.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="5" data-label="#">5</td>
+          <td data-val="2025-09-20" data-label="Match">
+            <div class="match-name">Brighton & Hove Albion vs Tottenham Hotspur</div>
+            <div class="meta">2025-09-20 &bull; GW5</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300589" data-label="Match ID"><code title="sr:sport_event:61300589">sr:sport_event:61300589</code></td>
+          <td data-val="Van Hecke, Jan Paul" data-label="Scorer">
+            <div class="player-name">Jan Paul Van Hecke</div>
+            <div class="meta">Brighton & Hove Albion</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1630352" data-label="Player ID"><code title="sr:player:1630352">sr:player:1630352</code></td>
+          <td class="minute" data-val="82" data-label="Min">82'</td>
+          <td data-val="Tottenham Hotspur" data-label="Benefiting"><div class="team-badge">Tottenham Hotspur</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–2</td>
+          <td class="score final" data-val="2" data-label="Final">2–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Jan Paul Van Hecke blunders with an own goal. This makes it 2-2." data-label="Commentary"><span class="commentary">Jan Paul Van Hecke blunders with an own goal. This makes it 2-2.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="6" data-label="#">6</td>
+          <td data-val="2025-09-27" data-label="Match">
+            <div class="match-name">Manchester City vs Burnley FC</div>
+            <div class="meta">2025-09-27 &bull; GW6</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300619" data-label="Match ID"><code title="sr:sport_event:61300619">sr:sport_event:61300619</code></td>
+          <td data-val="Esteve, Maxime" data-label="Scorer">
+            <div class="player-name">Maxime Esteve</div>
+            <div class="meta">Burnley FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1644602" data-label="Player ID"><code title="sr:player:1644602">sr:player:1644602</code></td>
+          <td class="minute" data-val="12" data-label="Min">12'</td>
+          <td data-val="Manchester City" data-label="Benefiting"><div class="team-badge">Manchester City</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="5" data-label="Final">5–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Maxime Esteve is on target to give Man City a 1-0 advantage." data-label="Commentary"><span class="commentary">Maxime Esteve is on target to give Man City a 1-0 advantage.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="7" data-label="#">7</td>
+          <td data-val="2025-09-27" data-label="Match">
+            <div class="match-name">Manchester City vs Burnley FC</div>
+            <div class="meta">2025-09-27 &bull; GW6</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300619" data-label="Match ID"><code title="sr:sport_event:61300619">sr:sport_event:61300619</code></td>
+          <td data-val="Esteve, Maxime" data-label="Scorer">
+            <div class="player-name">Maxime Esteve</div>
+            <div class="meta">Burnley FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1644602" data-label="Player ID"><code title="sr:player:1644602">sr:player:1644602</code></td>
+          <td class="minute" data-val="65" data-label="Min">65'</td>
+          <td data-val="Manchester City" data-label="Benefiting"><div class="team-badge">Manchester City</div></td>
+          <td class="score" data-val="3" data-label="At OG">3–1</td>
+          <td class="score final" data-val="5" data-label="Final">5–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Maxime Esteve extends Man City's lead to 3-1." data-label="Commentary"><span class="commentary">Goal! Maxime Esteve extends Man City's lead to 3-1.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="8" data-label="#">8</td>
+          <td data-val="2025-10-05" data-label="Match">
+            <div class="match-name">Wolverhampton Wanderers vs Brighton & Hove Albion</div>
+            <div class="meta">2025-10-05 &bull; GW7</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300645" data-label="Match ID"><code title="sr:sport_event:61300645">sr:sport_event:61300645</code></td>
+          <td data-val="Verbruggen, Bart" data-label="Scorer">
+            <div class="player-name">Bart Verbruggen</div>
+            <div class="meta">Brighton & Hove Albion</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1859404" data-label="Player ID"><code title="sr:player:1859404">sr:player:1859404</code></td>
+          <td class="minute" data-val="21" data-label="Min">21'</td>
+          <td data-val="Wolverhampton Wanderers" data-label="Benefiting"><div class="team-badge">Wolverhampton Wanderers</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Bart Verbruggen puts the ball in the net and the home team now lead 1-0." data-label="Commentary"><span class="commentary">Bart Verbruggen puts the ball in the net and the home team now lead 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="9" data-label="#">9</td>
+          <td data-val="2025-10-18" data-label="Match">
+            <div class="match-name">Sunderland AFC vs Wolverhampton Wanderers</div>
+            <div class="meta">2025-10-18 &bull; GW8</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300661" data-label="Match ID"><code title="sr:sport_event:61300661">sr:sport_event:61300661</code></td>
+          <td data-val="Krejci, Ladislav" data-label="Scorer">
+            <div class="player-name">Ladislav Krejci</div>
+            <div class="meta">Wolverhampton Wanderers</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:927018" data-label="Player ID"><code title="sr:player:927018">sr:player:927018</code></td>
+          <td class="minute" data-val="90" data-label="Min">90+2'</td>
+          <td data-val="Sunderland AFC" data-label="Benefiting"><div class="team-badge">Sunderland AFC</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Ladislav Krejci has the misfortune to make it 2-0 through an own goal." data-label="Commentary"><span class="commentary">Ladislav Krejci has the misfortune to make it 2-0 through an own goal.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="10" data-label="#">10</td>
+          <td data-val="2025-10-25" data-label="Match">
+            <div class="match-name">Manchester United vs Brighton & Hove Albion</div>
+            <div class="meta">2025-10-25 &bull; GW9</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300681" data-label="Match ID"><code title="sr:sport_event:61300681">sr:sport_event:61300681</code></td>
+          <td data-val="Casemiro" data-label="Scorer">
+            <div class="player-name">Casemiro</div>
+            <div class="meta">Brighton & Hove Albion</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:122951" data-label="Player ID"><code title="sr:player:122951">sr:player:122951</code></td>
+          <td class="minute" data-val="34" data-label="Min">34'</td>
+          <td data-val="Manchester United" data-label="Benefiting"><div class="team-badge">Manchester United</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="4" data-label="Final">4–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="An unfortunate own goal by Casemiro makes the score 2-0." data-label="Commentary"><span class="commentary">An unfortunate own goal by Casemiro makes the score 2-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="11" data-label="#">11</td>
+          <td data-val="2025-11-01" data-label="Match">
+            <div class="match-name">Crystal Palace vs Brentford FC</div>
+            <div class="meta">2025-11-01 &bull; GW10</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300691" data-label="Match ID"><code title="sr:sport_event:61300691">sr:sport_event:61300691</code></td>
+          <td data-val="Collins, Nathan" data-label="Scorer">
+            <div class="player-name">Nathan Collins</div>
+            <div class="meta">Brentford FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1069190" data-label="Player ID"><code title="sr:player:1069190">sr:player:1069190</code></td>
+          <td class="minute" data-val="51" data-label="Min">51'</td>
+          <td data-val="Crystal Palace" data-label="Benefiting"><div class="team-badge">Crystal Palace</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Nathan Collins blunders with an own goal. This makes it 2-0." data-label="Commentary"><span class="commentary">Nathan Collins blunders with an own goal. This makes it 2-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="12" data-label="#">12</td>
+          <td data-val="2025-11-01" data-label="Match">
+            <div class="match-name">Fulham FC vs Wolverhampton Wanderers</div>
+            <div class="meta">2025-11-01 &bull; GW10</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300693" data-label="Match ID"><code title="sr:sport_event:61300693">sr:sport_event:61300693</code></td>
+          <td data-val="Mosquera, Yerson" data-label="Scorer">
+            <div class="player-name">Yerson Mosquera</div>
+            <div class="meta">Wolverhampton Wanderers</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1769162" data-label="Player ID"><code title="sr:player:1769162">sr:player:1769162</code></td>
+          <td class="minute" data-val="75" data-label="Min">75'</td>
+          <td data-val="Fulham FC" data-label="Benefiting"><div class="team-badge">Fulham FC</div></td>
+          <td class="score" data-val="3" data-label="At OG">3–0</td>
+          <td class="score final" data-val="3" data-label="Final">3–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="It's now 3-0 thanks to an own goal from Yerson Mosquera." data-label="Commentary"><span class="commentary">It's now 3-0 thanks to an own goal from Yerson Mosquera.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="13" data-label="#">13</td>
+          <td data-val="2025-11-02" data-label="Match">
+            <div class="match-name">West Ham United vs Newcastle United</div>
+            <div class="meta">2025-11-02 &bull; GW10</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300705" data-label="Match ID"><code title="sr:sport_event:61300705">sr:sport_event:61300705</code></td>
+          <td data-val="Botman, Sven" data-label="Scorer">
+            <div class="player-name">Sven Botman</div>
+            <div class="meta">Newcastle United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1059315" data-label="Player ID"><code title="sr:player:1059315">sr:player:1059315</code></td>
+          <td class="minute" data-val="45" data-label="Min">45+5'</td>
+          <td data-val="West Ham United" data-label="Benefiting"><div class="team-badge">West Ham United</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–1</td>
+          <td class="score final" data-val="3" data-label="Final">3–1</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Sven Botman blunders with an own goal. This makes it 2-1." data-label="Commentary"><span class="commentary">Sven Botman blunders with an own goal. This makes it 2-1.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="14" data-label="#">14</td>
+          <td data-val="2025-12-02" data-label="Match">
+            <div class="match-name">Fulham FC vs Manchester City</div>
+            <div class="meta">2025-12-02 &bull; GW14</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300783" data-label="Match ID"><code title="sr:sport_event:61300783">sr:sport_event:61300783</code></td>
+          <td data-val="Berge, Sander" data-label="Scorer">
+            <div class="player-name">Sander Berge</div>
+            <div class="meta">Fulham FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:566232" data-label="Player ID"><code title="sr:player:566232">sr:player:566232</code></td>
+          <td class="minute" data-val="54" data-label="Min">54'</td>
+          <td data-val="Manchester City" data-label="Benefiting"><div class="team-badge">Manchester City</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–5</td>
+          <td class="score final" data-val="4" data-label="Final">4–5</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Sander Berge puts the ball in the net and the away team extend their lead. The score-line now reads 1-5." data-label="Commentary"><span class="commentary">Sander Berge puts the ball in the net and the away team extend their lead. The score-line now reads 1-5.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="15" data-label="#">15</td>
+          <td data-val="2025-12-03" data-label="Match">
+            <div class="match-name">Brighton & Hove Albion vs Aston Villa</div>
+            <div class="meta">2025-12-03 &bull; GW14</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300779" data-label="Match ID"><code title="sr:sport_event:61300779">sr:sport_event:61300779</code></td>
+          <td data-val="Torres, Pau" data-label="Scorer">
+            <div class="player-name">Pau Torres</div>
+            <div class="meta">Aston Villa</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:944170" data-label="Player ID"><code title="sr:player:944170">sr:player:944170</code></td>
+          <td class="minute" data-val="29" data-label="Min">29'</td>
+          <td data-val="Brighton & Hove Albion" data-label="Benefiting"><div class="team-badge">Brighton & Hove Albion</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="3" data-label="Final">3–4</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Pau Torres scores an unfortunate own goal. This makes it 2-0 at American Express Community Stadium." data-label="Commentary"><span class="commentary">Pau Torres scores an unfortunate own goal. This makes it 2-0 at American Express Community Stadium.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="16" data-label="#">16</td>
+          <td data-val="2025-12-03" data-label="Match">
+            <div class="match-name">Liverpool FC vs Sunderland AFC</div>
+            <div class="meta">2025-12-03 &bull; GW14</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300791" data-label="Match ID"><code title="sr:sport_event:61300791">sr:sport_event:61300791</code></td>
+          <td data-val="Mukiele, Nordi" data-label="Scorer">
+            <div class="player-name">Nordi Mukiele</div>
+            <div class="meta">Sunderland AFC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:780014" data-label="Player ID"><code title="sr:player:780014">sr:player:780014</code></td>
+          <td class="minute" data-val="81" data-label="Min">81'</td>
+          <td data-val="Liverpool FC" data-label="Benefiting"><div class="team-badge">Liverpool FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–1</td>
+          <td class="score final" data-val="1" data-label="Final">1–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Nordi Mukiele levels the match at 1-1." data-label="Commentary"><span class="commentary">Goal! Nordi Mukiele levels the match at 1-1.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="17" data-label="#">17</td>
+          <td data-val="2025-12-06" data-label="Match">
+            <div class="match-name">Everton FC vs Nottingham Forest</div>
+            <div class="meta">2025-12-06 &bull; GW15</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300801" data-label="Match ID"><code title="sr:sport_event:61300801">sr:sport_event:61300801</code></td>
+          <td data-val="Milenkovic, Nikola" data-label="Scorer">
+            <div class="player-name">Nikola Milenkovic</div>
+            <div class="meta">Nottingham Forest</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:976055" data-label="Player ID"><code title="sr:player:976055">sr:player:976055</code></td>
+          <td class="minute" data-val="2" data-label="Min">2'</td>
+          <td data-val="Everton FC" data-label="Benefiting"><div class="team-badge">Everton FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="3" data-label="Final">3–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Nikola Milenkovic blunders with an own goal. This makes it 1-0." data-label="Commentary"><span class="commentary">Nikola Milenkovic blunders with an own goal. This makes it 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="18" data-label="#">18</td>
+          <td data-val="2025-12-13" data-label="Match">
+            <div class="match-name">Arsenal FC vs Wolverhampton Wanderers</div>
+            <div class="meta">2025-12-13 &bull; GW16</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300815" data-label="Match ID"><code title="sr:sport_event:61300815">sr:sport_event:61300815</code></td>
+          <td data-val="Johnstone, Sam" data-label="Scorer">
+            <div class="player-name">Sam Johnstone</div>
+            <div class="meta">Wolverhampton Wanderers</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:98427" data-label="Player ID"><code title="sr:player:98427">sr:player:98427</code></td>
+          <td class="minute" data-val="70" data-label="Min">70'</td>
+          <td data-val="Arsenal FC" data-label="Benefiting"><div class="team-badge">Arsenal FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–1</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Own goal! Sam Johnstone has scored at the wrong end to make it 1-0." data-label="Commentary"><span class="commentary">Own goal! Sam Johnstone has scored at the wrong end to make it 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="19" data-label="#">19</td>
+          <td data-val="2025-12-13" data-label="Match">
+            <div class="match-name">Arsenal FC vs Wolverhampton Wanderers</div>
+            <div class="meta">2025-12-13 &bull; GW16</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300815" data-label="Match ID"><code title="sr:sport_event:61300815">sr:sport_event:61300815</code></td>
+          <td data-val="Mosquera, Yerson" data-label="Scorer">
+            <div class="player-name">Yerson Mosquera</div>
+            <div class="meta">Wolverhampton Wanderers</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1769162" data-label="Player ID"><code title="sr:player:1769162">sr:player:1769162</code></td>
+          <td class="minute" data-val="90" data-label="Min">90+4'</td>
+          <td data-val="Arsenal FC" data-label="Benefiting"><div class="team-badge">Arsenal FC</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–1</td>
+          <td class="score final" data-val="2" data-label="Final">2–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Yerson Mosquera scores with a header and the home team now lead 2-1." data-label="Commentary"><span class="commentary">Yerson Mosquera scores with a header and the home team now lead 2-1.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="20" data-label="#">20</td>
+          <td data-val="2025-12-14" data-label="Match">
+            <div class="match-name">West Ham United vs Aston Villa</div>
+            <div class="meta">2025-12-14 &bull; GW16</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300833" data-label="Match ID"><code title="sr:sport_event:61300833">sr:sport_event:61300833</code></td>
+          <td data-val="Mavropanos, Konstantinos" data-label="Scorer">
+            <div class="player-name">Konstantinos Mavropanos</div>
+            <div class="meta">West Ham United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:950080" data-label="Player ID"><code title="sr:player:950080">sr:player:950080</code></td>
+          <td class="minute" data-val="9" data-label="Min">9'</td>
+          <td data-val="Aston Villa" data-label="Benefiting"><div class="team-badge">Aston Villa</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–1</td>
+          <td class="score final" data-val="2" data-label="Final">2–3</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Konstantinos Mavropanos (Aston Villa) levels the score at 1-1 with a header." data-label="Commentary"><span class="commentary">Goal! Konstantinos Mavropanos (Aston Villa) levels the score at 1-1 with a header.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="21" data-label="#">21</td>
+          <td data-val="2025-12-14" data-label="Match">
+            <div class="match-name">Sunderland AFC vs Newcastle United</div>
+            <div class="meta">2025-12-14 &bull; GW16</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300831" data-label="Match ID"><code title="sr:sport_event:61300831">sr:sport_event:61300831</code></td>
+          <td data-val="Woltemade, Nick" data-label="Scorer">
+            <div class="player-name">Nick Woltemade</div>
+            <div class="meta">Newcastle United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1724622" data-label="Player ID"><code title="sr:player:1724622">sr:player:1724622</code></td>
+          <td class="minute" data-val="46" data-label="Min">46'</td>
+          <td data-val="Sunderland AFC" data-label="Benefiting"><div class="team-badge">Sunderland AFC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="An unfortunate own goal by Nick Woltemade makes the score 1-0." data-label="Commentary"><span class="commentary">An unfortunate own goal by Nick Woltemade makes the score 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="22" data-label="#">22</td>
+          <td data-val="2025-12-27" data-label="Match">
+            <div class="match-name">Brentford FC vs AFC Bournemouth</div>
+            <div class="meta">2025-12-27 &bull; GW18</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300857" data-label="Match ID"><code title="sr:sport_event:61300857">sr:sport_event:61300857</code></td>
+          <td data-val="Petrovic, Djordje" data-label="Scorer">
+            <div class="player-name">Djordje Petrovic</div>
+            <div class="meta">AFC Bournemouth</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1060571" data-label="Player ID"><code title="sr:player:1060571">sr:player:1060571</code></td>
+          <td class="minute" data-val="39" data-label="Min">39'</td>
+          <td data-val="Brentford FC" data-label="Benefiting"><div class="team-badge">Brentford FC</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="4" data-label="Final">4–1</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Djordje Petrovic extends Brentford's lead to 2-0." data-label="Commentary"><span class="commentary">Goal! Djordje Petrovic extends Brentford's lead to 2-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="23" data-label="#">23</td>
+          <td data-val="2025-12-27" data-label="Match">
+            <div class="match-name">Arsenal FC vs Brighton & Hove Albion</div>
+            <div class="meta">2025-12-27 &bull; GW18</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300855" data-label="Match ID"><code title="sr:sport_event:61300855">sr:sport_event:61300855</code></td>
+          <td data-val="Rutter, Georginio" data-label="Scorer">
+            <div class="player-name">Georginio Rutter</div>
+            <div class="meta">Brighton & Hove Albion</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1565286" data-label="Player ID"><code title="sr:player:1565286">sr:player:1565286</code></td>
+          <td class="minute" data-val="52" data-label="Min">52'</td>
+          <td data-val="Arsenal FC" data-label="Benefiting"><div class="team-badge">Arsenal FC</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–1</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Georginio Rutter has the misfortune to make it 2-0 through an own goal." data-label="Commentary"><span class="commentary">Georginio Rutter has the misfortune to make it 2-0 through an own goal.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="24" data-label="#">24</td>
+          <td data-val="2026-01-06" data-label="Match">
+            <div class="match-name">West Ham United vs Nottingham Forest</div>
+            <div class="meta">2026-01-06 &bull; GW21</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300931" data-label="Match ID"><code title="sr:sport_event:61300931">sr:sport_event:61300931</code></td>
+          <td data-val="Murillo" data-label="Scorer">
+            <div class="player-name">Murillo</div>
+            <div class="meta">Nottingham Forest</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:2361593" data-label="Player ID"><code title="sr:player:2361593">sr:player:2361593</code></td>
+          <td class="minute" data-val="13" data-label="Min">13'</td>
+          <td data-val="West Ham United" data-label="Benefiting"><div class="team-badge">West Ham United</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Murillo blunders with an own goal. This makes it 1-0." data-label="Commentary"><span class="commentary">Murillo blunders with an own goal. This makes it 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="25" data-label="#">25</td>
+          <td data-val="2026-01-07" data-label="Match">
+            <div class="match-name">Burnley FC vs Manchester United</div>
+            <div class="meta">2026-01-07 &bull; GW21</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300923" data-label="Match ID"><code title="sr:sport_event:61300923">sr:sport_event:61300923</code></td>
+          <td data-val="Heaven, Ayden" data-label="Scorer">
+            <div class="player-name">Ayden Heaven</div>
+            <div class="meta">Manchester United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:2691816" data-label="Player ID"><code title="sr:player:2691816">sr:player:2691816</code></td>
+          <td class="minute" data-val="13" data-label="Min">13'</td>
+          <td data-val="Burnley FC" data-label="Benefiting"><div class="team-badge">Burnley FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Own goal! Ayden Heaven has scored at the wrong end to make it 1-0." data-label="Commentary"><span class="commentary">Own goal! Ayden Heaven has scored at the wrong end to make it 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="26" data-label="#">26</td>
+          <td data-val="2026-01-25" data-label="Match">
+            <div class="match-name">Arsenal FC vs Manchester United</div>
+            <div class="meta">2026-01-25 &bull; GW23</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300959" data-label="Match ID"><code title="sr:sport_event:61300959">sr:sport_event:61300959</code></td>
+          <td data-val="Martinez, Lisandro" data-label="Scorer">
+            <div class="player-name">Lisandro Martinez</div>
+            <div class="meta">Manchester United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1134755" data-label="Player ID"><code title="sr:player:1134755">sr:player:1134755</code></td>
+          <td class="minute" data-val="29" data-label="Min">29'</td>
+          <td data-val="Arsenal FC" data-label="Benefiting"><div class="team-badge">Arsenal FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="2" data-label="Final">2–3</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Lisandro Martinez scores an unfortunate own goal. This makes it 1-0 at Emirates Stadium." data-label="Commentary"><span class="commentary">Lisandro Martinez scores an unfortunate own goal. This makes it 1-0 at Emirates Stadium.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="27" data-label="#">27</td>
+          <td data-val="2026-01-31" data-label="Match">
+            <div class="match-name">Leeds United vs Arsenal FC</div>
+            <div class="meta">2026-01-31 &bull; GW24</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61300983" data-label="Match ID"><code title="sr:sport_event:61300983">sr:sport_event:61300983</code></td>
+          <td data-val="Madueke, Noni" data-label="Scorer">
+            <div class="player-name">Noni Madueke</div>
+            <div class="meta">Leeds United</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:1300742" data-label="Player ID"><code title="sr:player:1300742">sr:player:1300742</code></td>
+          <td class="minute" data-val="38" data-label="Min">38'</td>
+          <td data-val="Arsenal FC" data-label="Benefiting"><div class="team-badge">Arsenal FC</div></td>
+          <td class="score" data-val="0" data-label="At OG">0–2</td>
+          <td class="score final" data-val="0" data-label="Final">0–4</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="An unfortunate own goal by Noni Madueke makes the score 0-2." data-label="Commentary"><span class="commentary">An unfortunate own goal by Noni Madueke makes the score 0-2.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="28" data-label="#">28</td>
+          <td data-val="2026-02-02" data-label="Match">
+            <div class="match-name">Sunderland AFC vs Burnley FC</div>
+            <div class="meta">2026-02-02 &bull; GW24</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:65905652" data-label="Match ID"><code title="sr:sport_event:65905652">sr:sport_event:65905652</code></td>
+          <td data-val="Tuanzebe, Axel" data-label="Scorer">
+            <div class="player-name">Axel Tuanzebe</div>
+            <div class="meta">Burnley FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:908340" data-label="Player ID"><code title="sr:player:908340">sr:player:908340</code></td>
+          <td class="minute" data-val="9" data-label="Min">9'</td>
+          <td data-val="Sunderland AFC" data-label="Benefiting"><div class="team-badge">Sunderland AFC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="3" data-label="Final">3–0</td>
+          <td class="og-no" data-val="0" data-label="Mentions OG?">No</td>
+          <td class="commentary-cell" data-val="Goal! Sunderland have got their heads in front thanks to a Axel Tuanzebe strike." data-label="Commentary"><span class="commentary">Goal! Sunderland have got their heads in front thanks to a Axel Tuanzebe strike.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="29" data-label="#">29</td>
+          <td data-val="2026-02-07" data-label="Match">
+            <div class="match-name">Fulham FC vs Everton FC</div>
+            <div class="meta">2026-02-07 &bull; GW25</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61301007" data-label="Match ID"><code title="sr:sport_event:61301007">sr:sport_event:61301007</code></td>
+          <td data-val="Mykolenko, Vitaliy" data-label="Scorer">
+            <div class="player-name">Vitaliy Mykolenko</div>
+            <div class="meta">Everton FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:935132" data-label="Player ID"><code title="sr:player:935132">sr:player:935132</code></td>
+          <td class="minute" data-val="18" data-label="Min">18'</td>
+          <td data-val="Fulham FC" data-label="Benefiting"><div class="team-badge">Fulham FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="An unfortunate own goal by Vitaliy Mykolenko makes the score 1-0." data-label="Commentary"><span class="commentary">An unfortunate own goal by Vitaliy Mykolenko makes the score 1-0.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="30" data-label="#">30</td>
+          <td data-val="2026-02-07" data-label="Match">
+            <div class="match-name">Fulham FC vs Everton FC</div>
+            <div class="meta">2026-02-07 &bull; GW25</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61301007" data-label="Match ID"><code title="sr:sport_event:61301007">sr:sport_event:61301007</code></td>
+          <td data-val="Leno, Bernd" data-label="Scorer">
+            <div class="player-name">Bernd Leno</div>
+            <div class="meta">Fulham FC</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:103335" data-label="Player ID"><code title="sr:player:103335">sr:player:103335</code></td>
+          <td class="minute" data-val="83" data-label="Min">83'</td>
+          <td data-val="Everton FC" data-label="Benefiting"><div class="team-badge">Everton FC</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–2</td>
+          <td class="score final" data-val="1" data-label="Final">1–2</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="It's now 1-2 thanks to an own goal from Bernd Leno." data-label="Commentary"><span class="commentary">It's now 1-2 thanks to an own goal from Bernd Leno.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="31" data-label="#">31</td>
+          <td data-val="2026-02-11" data-label="Match">
+            <div class="match-name">Crystal Palace vs Burnley FC</div>
+            <div class="meta">2026-02-11 &bull; GW26</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61301035" data-label="Match ID"><code title="sr:sport_event:61301035">sr:sport_event:61301035</code></td>
+          <td data-val="Lerma, Jefferson" data-label="Scorer">
+            <div class="player-name">Jefferson Lerma</div>
+            <div class="meta">Crystal Palace</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:355796" data-label="Player ID"><code title="sr:player:355796">sr:player:355796</code></td>
+          <td class="minute" data-val="45" data-label="Min">45+3'</td>
+          <td data-val="Burnley FC" data-label="Benefiting"><div class="team-badge">Burnley FC</div></td>
+          <td class="score" data-val="2" data-label="At OG">2–3</td>
+          <td class="score final" data-val="2" data-label="Final">2–3</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="It's now 2-3 thanks to an own goal from Jefferson Lerma." data-label="Commentary"><span class="commentary">It's now 2-3 thanks to an own goal from Jefferson Lerma.</span></td>
+        </tr>
+
+        <tr>
+          <td class="num" data-val="32" data-label="#">32</td>
+          <td data-val="2026-02-11" data-label="Match">
+            <div class="match-name">Aston Villa vs Brighton & Hove Albion</div>
+            <div class="meta">2026-02-11 &bull; GW26</div>
+          </td>
+          <td class="id-cell" data-val="sr:sport_event:61301033" data-label="Match ID"><code title="sr:sport_event:61301033">sr:sport_event:61301033</code></td>
+          <td data-val="Hinshelwood, Jack" data-label="Scorer">
+            <div class="player-name">Jack Hinshelwood</div>
+            <div class="meta">Brighton & Hove Albion</div>
+          </td>
+          <td class="id-cell" data-val="sr:player:2532547" data-label="Player ID"><code title="sr:player:2532547">sr:player:2532547</code></td>
+          <td class="minute" data-val="86" data-label="Min">86'</td>
+          <td data-val="Aston Villa" data-label="Benefiting"><div class="team-badge">Aston Villa</div></td>
+          <td class="score" data-val="1" data-label="At OG">1–0</td>
+          <td class="score final" data-val="1" data-label="Final">1–0</td>
+          <td class="og-yes" data-val="1" data-label="Mentions OG?">Yes</td>
+          <td class="commentary-cell" data-val="Jack Hinshelwood scores an unfortunate own goal. This makes it 1-0 at Villa Park." data-label="Commentary"><span class="commentary">Jack Hinshelwood scores an unfortunate own goal. This makes it 1-0 at Villa Park.</span></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  
+  <div class="branding">
+    <span class="branding-label">Brought to you by</span>
+    <div class="branding-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0c1a"/>
+      <stop offset="50%" style="stop-color:#1a0f2e"/>
+      <stop offset="100%" style="stop-color:#0c1a1f"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700"/>
+      <stop offset="40%" style="stop-color:#ff8c00"/>
+      <stop offset="70%" style="stop-color:#ff4500"/>
+      <stop offset="100%" style="stop-color:#ffd700"/>
+    </linearGradient>
+    <linearGradient id="subGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e8e0f0"/>
+      <stop offset="50%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e8e0f0"/>
+    </linearGradient>
+    <linearGradient id="stripeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff4500;stop-opacity:0"/>
+      <stop offset="20%" style="stop-color:#ffd700"/>
+      <stop offset="50%" style="stop-color:#ff8c00"/>
+      <stop offset="80%" style="stop-color:#ffd700"/>
+      <stop offset="100%" style="stop-color:#ff4500;stop-opacity:0"/>
+    </linearGradient>
+    <filter id="titleGlow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#ff8c00" flood-opacity="0.5" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="iconGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="45%">
+      <stop offset="0%" style="stop-color:#2a1040;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:transparent;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" style="stop-color:transparent;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.65"/>
+    </radialGradient>
+  </defs>
+
+  <!-- BACKGROUND -->
+  <rect width="900" height="420" fill="url(#bgGrad)"/>
+  <rect width="900" height="420" fill="url(#centerGlow)"/>
+  <!-- Diagonal texture lines -->
+  <g opacity="0.04" stroke="#ffffff" stroke-width="0.5">
+    <line x1="0" y1="0" x2="900" y2="420"/>
+    <line x1="150" y1="0" x2="900" y2="280"/>
+    <line x1="300" y1="0" x2="900" y2="140"/>
+    <line x1="0" y1="140" x2="600" y2="420"/>
+    <line x1="0" y1="280" x2="300" y2="420"/>
+  </g>
+  <!-- Accent stripes top/bottom -->
+  <rect x="0" y="0" width="900" height="6" fill="url(#stripeGrad)"/>
+  <rect x="0" y="414" width="900" height="6" fill="url(#stripeGrad)"/>
+  <!-- Side gold lines -->
+  <line x1="4" y1="6" x2="4" y2="414" stroke="#ffd700" stroke-width="4" opacity="0.5"/>
+  <line x1="896" y1="6" x2="896" y2="414" stroke="#ffd700" stroke-width="4" opacity="0.5"/>
+
+  <!-- ======== BASKETBALL (top-left) ======== -->
+  <g transform="translate(82, 72) rotate(-12)" opacity="0.85" filter="url(#iconGlow)">
+    <circle cx="0" cy="0" r="36" fill="#e8650a" stroke="#c45000" stroke-width="1.5"/>
+    <path d="M-36,0 Q-16,-20 0,-22 Q16,-20 36,0" fill="none" stroke="#7a2800" stroke-width="2.2"/>
+    <path d="M-36,0 Q-16,20 0,22 Q16,20 36,0" fill="none" stroke="#7a2800" stroke-width="2.2"/>
+    <path d="M0,-36 Q14,-16 14,0 Q14,16 0,36" fill="none" stroke="#7a2800" stroke-width="2.2"/>
+    <path d="M0,-36 Q-14,-16 -14,0 Q-14,16 0,36" fill="none" stroke="#7a2800" stroke-width="2.2"/>
+    <ellipse cx="-11" cy="-13" rx="8" ry="5" fill="white" opacity="0.18" transform="rotate(-20)"/>
+  </g>
+
+  <!-- ======== FOOTBALL (top-right) ======== -->
+  <g transform="translate(808, 78) rotate(25)" opacity="0.85" filter="url(#iconGlow)">
+    <ellipse cx="0" cy="0" rx="40" ry="23" fill="#7a4a10" stroke="#5a3008" stroke-width="1.5"/>
+    <ellipse cx="0" cy="0" rx="40" ry="23" fill="url(#fbTex)" opacity="0.1"/>
+    <!-- Lacing -->
+    <line x1="0" y1="-11" x2="0" y2="11" stroke="#f0d080" stroke-width="2.2"/>
+    <line x1="-8" y1="-8" x2="8" y2="-8" stroke="#f0d080" stroke-width="1.8"/>
+    <line x1="-9" y1="-3" x2="9" y2="-3" stroke="#f0d080" stroke-width="1.8"/>
+    <line x1="-9" y1="3" x2="9" y2="3" stroke="#f0d080" stroke-width="1.8"/>
+    <line x1="-8" y1="8" x2="8" y2="8" stroke="#f0d080" stroke-width="1.8"/>
+    <!-- End seams -->
+    <path d="M-32,0 Q-22,-9 -11,-7" fill="none" stroke="#5a3008" stroke-width="1.8"/>
+    <path d="M-32,0 Q-22,9 -11,7" fill="none" stroke="#5a3008" stroke-width="1.8"/>
+    <path d="M32,0 Q22,-9 11,-7" fill="none" stroke="#5a3008" stroke-width="1.8"/>
+    <path d="M32,0 Q22,9 11,7" fill="none" stroke="#5a3008" stroke-width="1.8"/>
+    <ellipse cx="-13" cy="-8" rx="7" ry="4" fill="white" opacity="0.15" transform="rotate(20)"/>
+  </g>
+
+  <!-- ======== TENNIS RACKET (bottom-left) ======== -->
+  <g transform="translate(62, 318) rotate(-38)" opacity="0.8" filter="url(#iconGlow)">
+    <!-- Handle -->
+    <rect x="-5.5" y="28" width="11" height="54" rx="4" fill="#a07830" stroke="#7a5820" stroke-width="1"/>
+    <!-- Grip tape -->
+    <rect x="-5.5" y="50" width="11" height="5" rx="1" fill="#222" opacity="0.55"/>
+    <rect x="-5.5" y="58" width="11" height="5" rx="1" fill="#222" opacity="0.55"/>
+    <rect x="-5.5" y="66" width="11" height="5" rx="1" fill="#222" opacity="0.55"/>
+    <!-- Throat -->
+    <path d="M-5.5,28 Q-12,18 -15,8 L15,8 Q12,18 5.5,28 Z" fill="#999" stroke="#777" stroke-width="1"/>
+    <!-- Frame -->
+    <ellipse cx="0" cy="-10" rx="30" ry="36" fill="none" stroke="#e0c060" stroke-width="5.5"/>
+    <!-- Strings H -->
+    <line x1="-28" y1="-22" x2="28" y2="-22" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-30" y1="-15" x2="30" y2="-15" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-30" y1="-8" x2="30" y2="-8" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-30" y1="-1" x2="30" y2="-1" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-30" y1="6" x2="30" y2="6" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-28" y1="13" x2="28" y2="13" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-22" y1="20" x2="22" y2="20" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <!-- Strings V -->
+    <line x1="-22" y1="-45" x2="-22" y2="24" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-15" y1="-45" x2="-15" y2="28" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-8" y1="-46" x2="-8" y2="29" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="-1" y1="-46" x2="-1" y2="29" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="6" y1="-46" x2="6" y2="29" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="13" y1="-45" x2="13" y2="28" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <line x1="20" y1="-45" x2="20" y2="24" stroke="#eee" stroke-width="1" opacity="0.75"/>
+    <!-- Frame again on top -->
+    <ellipse cx="0" cy="-10" rx="30" ry="36" fill="none" stroke="#e0c060" stroke-width="5.5"/>
+  </g>
+  <!-- Tennis Ball -->
+  <g transform="translate(138, 354) rotate(12)" opacity="0.88" filter="url(#iconGlow)">
+    <circle cx="0" cy="0" r="21" fill="#c8e030" stroke="#a0b820" stroke-width="1.2"/>
+    <path d="M-15,-15 Q0,-4 15,-15" fill="none" stroke="white" stroke-width="2.8"/>
+    <path d="M-15,15 Q0,4 15,15" fill="none" stroke="white" stroke-width="2.8"/>
+    <ellipse cx="-6" cy="-7" rx="5" ry="3" fill="white" opacity="0.28" transform="rotate(-15)"/>
+  </g>
+
+  <!-- ======== SKIS + POLES (bottom-right) ======== -->
+  <g transform="translate(790, 338)" opacity="0.8" filter="url(#iconGlow)">
+    <!-- Ski 1 (top) -->
+    <rect x="-46" y="-9" width="118" height="9" rx="4.5" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+    <path d="M72,-9 Q86,-4 72,0" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+    <rect x="12" y="-14" width="22" height="18" rx="2.5" fill="#ddd" stroke="#bbb" stroke-width="1"/>
+    <!-- Ski 2 (bottom) -->
+    <rect x="-46" y="5" width="118" height="9" rx="4.5" fill="#e53935" stroke="#c62828" stroke-width="1"/>
+    <path d="M72,5 Q86,10 72,14" fill="#e53935" stroke="#c62828" stroke-width="1"/>
+    <rect x="12" y="0" width="22" height="18" rx="2.5" fill="#ddd" stroke="#bbb" stroke-width="1"/>
+    <!-- Pole left -->
+    <line x1="-20" y1="-44" x2="-10" y2="44" stroke="#bbb" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="-16" cy="14" r="8" fill="none" stroke="#bbb" stroke-width="2.2"/>
+    <circle cx="-19" cy="-38" r="4.5" fill="#999"/>
+    <!-- Pole right -->
+    <line x1="14" y1="-44" x2="4" y2="44" stroke="#bbb" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="8" cy="14" r="8" fill="none" stroke="#bbb" stroke-width="2.2"/>
+    <circle cx="13" cy="-38" r="4.5" fill="#999"/>
+  </g>
+
+  <!-- ======== SOCCER BALL (top-center-right) ======== -->
+  <g transform="translate(666, 70) rotate(8)" opacity="0.8" filter="url(#iconGlow)">
+    <circle cx="0" cy="0" r="32" fill="white" stroke="#ccc" stroke-width="1"/>
+    <polygon points="0,-19 10,-14 10,-4 0,3 -10,-4 -10,-14" fill="#1a1a1a"/>
+    <polygon points="0,-32 9,-25 5,-15 -5,-15 -9,-25" fill="#1a1a1a" opacity="0.8"/>
+    <polygon points="29,-11 32,0 23,8 14,7 13,-4 21,-15" fill="#1a1a1a" opacity="0.8"/>
+    <polygon points="-29,-11 -32,0 -23,8 -14,7 -13,-4 -21,-15" fill="#1a1a1a" opacity="0.8"/>
+    <polygon points="18,24 8,30 0,26 0,15 10,11 19,16" fill="#1a1a1a" opacity="0.8"/>
+    <polygon points="-18,24 -8,30 0,26 0,15 -10,11 -19,16" fill="#1a1a1a" opacity="0.8"/>
+    <ellipse cx="-9" cy="-12" rx="8" ry="5" fill="white" opacity="0.35" transform="rotate(-20)"/>
+  </g>
+
+  <!-- ======== BASEBALL (top-center-left) ======== -->
+  <g transform="translate(242, 66) rotate(6)" opacity="0.8" filter="url(#iconGlow)">
+    <circle cx="0" cy="0" r="27" fill="#f5f0e8" stroke="#ddd" stroke-width="1"/>
+    <path d="M-15,-21 Q-23,-9 -23,0 Q-23,9 -15,21" fill="none" stroke="#cc2200" stroke-width="2.2"/>
+    <line x1="-15" y1="-21" x2="-19" y2="-17" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="-17" y1="-13" x2="-21" y2="-9" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="-18" y1="-5" x2="-22" y2="-2" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="-18" y1="5" x2="-22" y2="7" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="-17" y1="13" x2="-21" y2="15" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="-15" y1="21" x2="-19" y2="18" stroke="#cc2200" stroke-width="1.8"/>
+    <path d="M15,-21 Q23,-9 23,0 Q23,9 15,21" fill="none" stroke="#cc2200" stroke-width="2.2"/>
+    <line x1="15" y1="-21" x2="19" y2="-17" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="17" y1="-13" x2="21" y2="-9" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="18" y1="-5" x2="22" y2="-2" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="18" y1="5" x2="22" y2="7" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="17" y1="13" x2="21" y2="15" stroke="#cc2200" stroke-width="1.8"/>
+    <line x1="15" y1="21" x2="19" y2="18" stroke="#cc2200" stroke-width="1.8"/>
+    <ellipse cx="-7" cy="-9" rx="5" ry="3" fill="white" opacity="0.35" transform="rotate(-15)"/>
+  </g>
+
+  <!-- ======== GOLF BALL + CLUB (top-center) ======== -->
+  <g transform="translate(454, 54) rotate(-5)" opacity="0.78" filter="url(#iconGlow)">
+    <line x1="-8" y1="-28" x2="20" y2="32" stroke="#c0c0c0" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="24" cy="38" rx="15" ry="9" fill="#888" stroke="#666" stroke-width="1.5" transform="rotate(-22, 24, 38)"/>
+    <circle cx="-18" cy="-20" r="17" fill="white" stroke="#ccc" stroke-width="1"/>
+    <!-- Dimples -->
+    <circle cx="-22" cy="-24" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-13" cy="-24" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-22" cy="-15" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-13" cy="-15" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-18" cy="-28" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-18" cy="-11" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-9" cy="-20" r="2.2" fill="#e0e0e0"/>
+    <circle cx="-27" cy="-20" r="2.2" fill="#e0e0e0"/>
+  </g>
+
+  <!-- ======== HOCKEY PUCK + STICK (bottom-center-left) ======== -->
+  <g transform="translate(298, 362) rotate(-18)" opacity="0.78" filter="url(#iconGlow)">
+    <rect x="-4.5" y="-58" width="9" height="74" rx="3.5" fill="#c8a060" stroke="#a07840" stroke-width="1"/>
+    <rect x="-4.5" y="14" width="34" height="11" rx="3.5" fill="#c8a060" stroke="#a07840" stroke-width="1"/>
+    <rect x="-4.5" y="-58" width="9" height="9" rx="2" fill="#111" opacity="0.5"/>
+    <rect x="-4.5" y="-46" width="9" height="9" rx="2" fill="#111" opacity="0.5"/>
+    <rect x="-4.5" y="-34" width="9" height="9" rx="2" fill="#111" opacity="0.5"/>
+    <ellipse cx="30" cy="31" rx="23" ry="8" fill="#1a1a1a" stroke="#333" stroke-width="1.5"/>
+    <ellipse cx="30" cy="29" rx="23" ry="8" fill="#2d2d2d" stroke="#444" stroke-width="1.5"/>
+  </g>
+
+  <!-- ======== SWIMMER (bottom-center-right) ======== -->
+  <g transform="translate(560, 364)" opacity="0.7" filter="url(#iconGlow)">
+    <ellipse cx="0" cy="0" rx="32" ry="11" fill="#1565c0" opacity="0.85"/>
+    <circle cx="-32" cy="-5" r="10" fill="#ffcc99"/>
+    <path d="M-42,-5 Q-38,-16 -23,-12 Q-19,-11 -22,-5" fill="#e53935"/>
+    <rect x="-40" y="-7" width="9" height="5" rx="2" fill="#1a1a2e" opacity="0.85"/>
+    <path d="M-23,-5 Q-5,-22 20,-9" fill="none" stroke="#ffcc99" stroke-width="5.5" stroke-linecap="round"/>
+    <path d="M-10,5 Q12,18 30,9" fill="none" stroke="#ffcc99" stroke-width="4.5" stroke-linecap="round" opacity="0.7"/>
+    <path d="M-42,9 Q-22,20 0,9 Q22,20 42,9" fill="none" stroke="#60b4ff" stroke-width="2.2" opacity="0.75"/>
+    <path d="M-38,15 Q-16,24 6,15 Q28,24 48,15" fill="none" stroke="#60b4ff" stroke-width="1.8" opacity="0.5"/>
+  </g>
+
+  <!-- ======== TROPHY (left-mid) ======== -->
+  <g transform="translate(175, 205)" opacity="0.65" filter="url(#iconGlow)">
+    <path d="M-20,-32 Q-24,-12 -17,10 Q-9,26 0,28 Q9,26 17,10 Q24,-12 20,-32 Z" fill="#ffd700" stroke="#cc9900" stroke-width="1.5"/>
+    <path d="M-13,-30 Q-16,-12 -10,8 Q-4,22 0,24 Q4,22 10,8 Q16,-12 13,-30 Z" fill="#ffec60" opacity="0.4"/>
+    <path d="M-20,-22 Q-34,-20 -32,-10 Q-30,0 -17,4" fill="none" stroke="#ffd700" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M20,-22 Q34,-20 32,-10 Q30,0 17,4" fill="none" stroke="#ffd700" stroke-width="4.5" stroke-linecap="round"/>
+    <rect x="-5.5" y="28" width="11" height="15" rx="2.5" fill="#cc9900"/>
+    <rect x="-20" y="41" width="40" height="9" rx="3.5" fill="#cc9900"/>
+    <text x="0" y="-8" font-size="18" text-anchor="middle" fill="white" opacity="0.75">★</text>
+  </g>
+
+  <!-- ======== RUNNER (right-center) ======== -->
+  <g transform="translate(730, 218)" opacity="0.68" filter="url(#iconGlow)">
+    <circle cx="0" cy="-46" r="11" fill="#ffcc99"/>
+    <line x1="0" y1="-35" x2="0" y2="-10" stroke="#e53935" stroke-width="6.5" stroke-linecap="round"/>
+    <line x1="0" y1="-30" x2="-22" y2="-14" stroke="#ffcc99" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="0" y1="-30" x2="20" y2="-20" stroke="#ffcc99" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="0" y1="-10" x2="-20" y2="11" stroke="#1565c0" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="-20" y1="11" x2="-9" y2="30" stroke="#1565c0" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="0" y1="-10" x2="18" y2="7" stroke="#1565c0" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="18" y1="7" x2="26" y2="26" stroke="#1565c0" stroke-width="5.5" stroke-linecap="round"/>
+    <ellipse cx="-7" cy="33" rx="9" ry="4.5" fill="#e53935"/>
+    <ellipse cx="28" cy="29" rx="9" ry="4.5" fill="#e53935"/>
+    <!-- Motion lines -->
+    <line x1="-32" y1="0" x2="-46" y2="0" stroke="#ffd700" stroke-width="2.2" opacity="0.65"/>
+    <line x1="-30" y1="-10" x2="-44" y2="-12" stroke="#ffd700" stroke-width="1.8" opacity="0.5"/>
+    <line x1="-30" y1="10" x2="-42" y2="12" stroke="#ffd700" stroke-width="1.8" opacity="0.4"/>
+  </g>
+
+  <!-- ======== MAIN TITLE ======== -->
+  <!-- Panel behind text -->
+  <rect x="186" y="148" width="528" height="136" rx="12" fill="#0f0a1e" opacity="0.58"/>
+  <rect x="188" y="150" width="524" height="132" rx="11" fill="none" stroke="#ffd700" stroke-width="0.6" opacity="0.35"/>
+
+  <!-- LANE'S -->
+  <text
+    x="450"
+    y="218"
+    font-family="'Georgia', 'Times New Roman', 'Palatino Linotype', serif"
+    font-size="74"
+    font-weight="900"
+    font-style="italic"
+    letter-spacing="14"
+    text-anchor="middle"
+    fill="url(#titleGrad)"
+    filter="url(#titleGlow)"
+  >LANE'S</text>
+
+  <!-- Divider -->
+  <line x1="235" y1="232" x2="665" y2="232" stroke="url(#stripeGrad)" stroke-width="1.8" opacity="0.75"/>
+
+  <!-- SPORTSDATA -->
+  <text
+    x="450"
+    y="272"
+    font-family="'Georgia', 'Times New Roman', 'Palatino Linotype', serif"
+    font-size="46"
+    font-weight="700"
+    letter-spacing="20"
+    text-anchor="middle"
+    fill="url(#subGrad)"
+    opacity="0.95"
+  >SPORTSDATA</text>
+
+  <!-- Tagline -->
+  <text
+    x="450"
+    y="385"
+    font-family="'Courier New', 'Lucida Console', monospace"
+    font-size="11"
+    letter-spacing="5"
+    text-anchor="middle"
+    fill="#ffd700"
+    opacity="0.5"
+  >STATS  ·  SCORES  ·  ANALYTICS  ·  LIVE DATA</text>
+
+  <!-- Vignette overlay -->
+  <rect width="900" height="420" fill="url(#vignette)"/>
+</svg>
+</div>
+  </div>
+
+  <div class="footer">
+    <p>Data sourced from <a href="https://developer.sportradar.com" target="_blank">Sportradar Soccer API</a> &bull; Report generated 27 February 2026, 05:39 UTC</p>
+  </div>
+
+  <script>
+    (function () {
+      const tbody = document.getElementById('og-tbody');
+      const headers = document.querySelectorAll('thead th[data-col]');
+      let sortCol = null;
+      let sortAsc = true;
+
+      headers.forEach(th => {
+        th.addEventListener('click', () => {
+          const col = parseInt(th.getAttribute('data-col'));
+          if (sortCol === col) {
+            sortAsc = !sortAsc;
+          } else {
+            sortCol = col;
+            sortAsc = true;
+          }
+          headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+          th.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+          sortTable(col, sortAsc);
+        });
+      });
+
+      function sortTable(colIndex, asc) {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+          const aVal = a.children[colIndex].getAttribute('data-val') || '';
+          const bVal = b.children[colIndex].getAttribute('data-val') || '';
+          const aNum = parseFloat(aVal);
+          const bNum = parseFloat(bVal);
+          let cmp;
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            cmp = aNum - bNum;
+          } else {
+            cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+          }
+          return asc ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        // Re-stripe rows after sort
+        rows.forEach((r, i) => {
+          r.style.background = '';
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>
