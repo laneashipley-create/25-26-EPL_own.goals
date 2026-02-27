@@ -157,6 +157,7 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
 
         commentary_correct = sum(1 for r in rows if "own goal" in r.get("commentary", "").lower())
         commentary_incorrect = total - commentary_correct
+        games_with_og = len(set(r["sport_event_id"] for r in rows))
 
         stats_html = f"""
         <div class="stats-grid">
@@ -170,7 +171,11 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
           </div>
           <div class="stat-card">
             <div class="stat-number">{total}</div>
-            <div class="stat-label">Own Goals</div>
+            <div class="stat-label">Total # of Own Goals</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{games_with_og}</div>
+            <div class="stat-label"># of Games with an Own Goal</div>
           </div>
           <div class="stat-card">
             <div class="stat-number">{unlucky_player_count}</div>
@@ -260,7 +265,7 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
     }}
     .stats-grid {{
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 0.75rem;
     }}
     .stat-card {{
