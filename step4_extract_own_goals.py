@@ -20,7 +20,7 @@ import csv
 import json
 import os
 
-from config import SCHEDULE_CSV, TIMELINES_DIR, OWN_GOALS_CSV
+from config import SCHEDULE_CSV, TIMELINES_DIR, OWN_GOALS_CSV, USE_SUPABASE
 
 OG_FIELDS = [
     "sport_event_id",
@@ -58,6 +58,20 @@ def cache_path(sport_event_id: str) -> str:
     return os.path.join(TIMELINES_DIR, f"{safe_id}.json")
 
 
+def _schedule_row_for_extract(row: dict) -> dict:
+    """Normalize schedule row (from DB or CSV) for extract_own_goals_from_timeline."""
+    start_time = row.get("start_time", "")
+    return {
+        "sport_event_id": row.get("sport_event_id", ""),
+        "start_time": str(start_time) if start_time else "",
+        "home_team": row.get("home_team", ""),
+        "away_team": row.get("away_team", ""),
+        "home_team_id": row.get("home_team_id", ""),
+        "away_team_id": row.get("away_team_id", ""),
+        "round": row.get("round", ""),
+    }
+
+
 def extract_own_goals_from_timeline(data: dict, schedule_row: dict) -> list[dict]:
     """Return a list of own goal rows from a single timeline response."""
     timeline = data.get("timeline", [])
@@ -72,13 +86,13 @@ def extract_own_goals_from_timeline(data: dict, schedule_row: dict) -> list[dict
     final_home = final_status.get("home_score", "")
     final_away = final_status.get("away_score", "")
 
-    event_id = schedule_row["sport_event_id"]
-    home_team = schedule_row["home_team"]
-    home_team_id = schedule_row["home_team_id"]
-    away_team = schedule_row["away_team"]
-    away_team_id = schedule_row["away_team_id"]
+    event_id = schedule_row.get("sport_event_id", "")
+    home_team = schedule_row.get("home_team", "")
+    home_team_id = schedule_row.get("home_team_id", "")
+    away_team = schedule_row.get("away_team", "")
+    away_team_id = schedule_row.get("away_team_id", "")
     round_num = schedule_row.get("round", "")
-    match_date = schedule_row["start_time"][:10]
+    match_date = str(schedule_row.get("start_time", ""))[:10]
 
     rows = []
     for ev in og_events:
@@ -125,51 +139,80 @@ def extract_own_goals_from_timeline(data: dict, schedule_row: dict) -> list[dict
 def main():
     os.makedirs(os.path.dirname(OWN_GOALS_CSV), exist_ok=True)
 
-    schedule = load_schedule_lookup(SCHEDULE_CSV)
-    if not schedule:
-        raise FileNotFoundError(
-            f"{SCHEDULE_CSV} not found — run step2_get_schedule.py first"
-        )
-
-    timeline_files = [f for f in os.listdir(TIMELINES_DIR) if f.endswith(".json")]
-    print(f"Scanning {len(timeline_files)} cached timelines...")
-
     all_own_goals = []
     matches_with_og = 0
 
-    for filename in sorted(timeline_files):
-        sport_event_id = filename.replace(".json", "").replace("_", ":", 2)
-        # Convert back: sr_sport_event_XXXXXXX → sr:sport_event:XXXXXXX
-        sport_event_id = filename.replace("sr_sport_event_", "sr:sport_event:").replace(".json", "")
+    if USE_SUPABASE:
+        import db
+        season_id = db.get_or_create_season()
+        matches_with_tl = db.get_completed_matches_with_timelines(season_id)
+        print(f"Scanning {len(matches_with_tl)} timelines from Supabase...")
 
-        row = schedule.get(sport_event_id)
-        if not row:
-            continue
+        for row in matches_with_tl:
+            data = row.get("timeline_json") or {}
+            sched_row = _schedule_row_for_extract(row)
+            ogs = extract_own_goals_from_timeline(data, sched_row)
+            if ogs:
+                matches_with_og += 1
+                all_own_goals.extend(ogs)
+                home = sched_row["home_team"]
+                away = sched_row["away_team"]
+                date = sched_row["start_time"][:10]
+                print(f"  Found {len(ogs)} OG(s) in {date}  {home} vs {away}")
 
-        filepath = os.path.join(TIMELINES_DIR, filename)
-        with open(filepath, encoding="utf-8") as f:
-            data = json.load(f)
+        all_own_goals.sort(key=lambda r: (r["match_date"], r["minute"] if r["minute"] != "" else 0))
 
-        ogs = extract_own_goals_from_timeline(data, row)
-        if ogs:
-            matches_with_og += 1
-            all_own_goals.extend(ogs)
-            home = row["home_team"]
-            away = row["away_team"]
-            print(f"  Found {len(ogs)} OG(s) in {row['start_time'][:10]}  {home} vs {away}")
+        if all_own_goals:
+            db.upsert_own_goals(all_own_goals, replace=True)
+        with open(OWN_GOALS_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=OG_FIELDS)
+            writer.writeheader()
+            writer.writerows(all_own_goals)
+        print(f"\nDone.")
+        print(f"  Matches with own goals : {matches_with_og}")
+        print(f"  Total own goals found  : {len(all_own_goals)}")
+        print(f"  Saved to Supabase + {OWN_GOALS_CSV}")
 
-    # Sort by date then minute
-    all_own_goals.sort(key=lambda r: (r["match_date"], r["minute"] if r["minute"] != "" else 0))
+    else:
+        schedule = load_schedule_lookup(SCHEDULE_CSV)
+        if not schedule:
+            raise FileNotFoundError(
+                f"{SCHEDULE_CSV} not found — run step2_get_schedule.py first"
+            )
 
-    with open(OWN_GOALS_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=OG_FIELDS)
-        writer.writeheader()
-        writer.writerows(all_own_goals)
+        timeline_files = [f for f in os.listdir(TIMELINES_DIR) if f.endswith(".json")]
+        print(f"Scanning {len(timeline_files)} cached timelines...")
 
-    print(f"\nDone.")
-    print(f"  Matches with own goals : {matches_with_og}")
-    print(f"  Total own goals found  : {len(all_own_goals)}")
-    print(f"  Saved to               : {OWN_GOALS_CSV}")
+        for filename in sorted(timeline_files):
+            sport_event_id = filename.replace("sr_sport_event_", "sr:sport_event:").replace(".json", "")
+
+            row = schedule.get(sport_event_id)
+            if not row:
+                continue
+
+            filepath = os.path.join(TIMELINES_DIR, filename)
+            with open(filepath, encoding="utf-8") as f:
+                data = json.load(f)
+
+            ogs = extract_own_goals_from_timeline(data, row)
+            if ogs:
+                matches_with_og += 1
+                all_own_goals.extend(ogs)
+                home = row["home_team"]
+                away = row["away_team"]
+                print(f"  Found {len(ogs)} OG(s) in {row['start_time'][:10]}  {home} vs {away}")
+
+        all_own_goals.sort(key=lambda r: (r["match_date"], r["minute"] if r["minute"] != "" else 0))
+
+        with open(OWN_GOALS_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=OG_FIELDS)
+            writer.writeheader()
+            writer.writerows(all_own_goals)
+
+        print(f"\nDone.")
+        print(f"  Matches with own goals : {matches_with_og}")
+        print(f"  Total own goals found  : {len(all_own_goals)}")
+        print(f"  Saved to               : {OWN_GOALS_CSV}")
 
 
 if __name__ == "__main__":

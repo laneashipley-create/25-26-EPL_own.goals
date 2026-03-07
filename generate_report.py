@@ -10,7 +10,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from config import OWN_GOALS_CSV, REPORT_HTML, SEASON_NAME, TIMELINES_DIR
+from config import OWN_GOALS_CSV, REPORT_HTML, SEASON_NAME, TIMELINES_DIR, USE_SUPABASE
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
@@ -685,11 +685,18 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
 
 
 def main():
-    rows = load_own_goals(OWN_GOALS_CSV)
-    rows.sort(key=lambda r: (r["match_date"], int(r["minute"]) if str(r["minute"]).isdigit() else 0))
-    completed_matches = count_completed_matches()
-    timeline_events = count_timeline_events()
-    print(f"Loaded {len(rows)} own goal records from {OWN_GOALS_CSV}")
+    if USE_SUPABASE:
+        import db
+        rows = db.get_all_own_goals()
+        completed_matches, timeline_events = db.get_report_stats()
+        rows.sort(key=lambda r: (r["match_date"], int(r["minute"]) if str(r["minute"]).isdigit() else 0))
+        print(f"Loaded {len(rows)} own goal records from Supabase")
+    else:
+        rows = load_own_goals(OWN_GOALS_CSV)
+        rows.sort(key=lambda r: (r["match_date"], int(r["minute"]) if str(r["minute"]).isdigit() else 0))
+        completed_matches = count_completed_matches()
+        timeline_events = count_timeline_events()
+        print(f"Loaded {len(rows)} own goal records from {OWN_GOALS_CSV}")
     print(f"Completed matches reviewed : {completed_matches}")
     print(f"Total timeline events      : {timeline_events:,}")
     html = generate_html(rows, completed_matches, timeline_events)

@@ -27,3 +27,12 @@ REQUEST_DELAY_SECONDS = 1.1
 
 # Only fetch timelines for matches with these statuses
 COMPLETED_STATUSES = {"closed", "ended"}
+
+# Supabase — EPL Own Goals project (key from config_local or env)
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://yoesorfzvtbdmvrdtqoo.supabase.co")
+try:
+    from config_local import SUPABASE_KEY as _LOCAL_SUPABASE_KEY
+    SUPABASE_KEY = _LOCAL_SUPABASE_KEY
+except (ImportError, AttributeError):
+    SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "") or os.environ.get("SUPABASE_ANON_KEY", "")
+USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)

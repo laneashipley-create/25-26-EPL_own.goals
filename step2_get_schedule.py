@@ -15,7 +15,7 @@ import time
 import urllib.request
 import urllib.error
 
-from config import API_KEY, BASE_URL, SEASON_ID, SCHEDULE_CSV, REQUEST_DELAY_SECONDS
+from config import API_KEY, BASE_URL, SEASON_ID, SCHEDULE_CSV, REQUEST_DELAY_SECONDS, USE_SUPABASE
 
 CSV_FIELDS = [
     "sport_event_id",
@@ -88,6 +88,13 @@ def save_csv(rows: list[dict], path: str) -> None:
 def main():
     schedules = fetch_schedule()
     rows = parse_schedule(schedules)
+
+    if USE_SUPABASE:
+        import db
+        season_id = db.get_or_create_season()
+        db.upsert_schedule(season_id, rows)
+        print(f"  -> Upserted {len(rows)} rows to Supabase schedule table")
+
     save_csv(rows, SCHEDULE_CSV)
 
     closed = sum(1 for r in rows if r["status"] in {"closed", "ended"})

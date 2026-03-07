@@ -24,6 +24,7 @@ from config import (
     TIMELINES_DIR,
     COMPLETED_STATUSES,
     REQUEST_DELAY_SECONDS,
+    USE_SUPABASE,
 )
 
 
@@ -57,8 +58,14 @@ def cache_path(sport_event_id: str) -> str:
 def main():
     os.makedirs(TIMELINES_DIR, exist_ok=True)
 
-    matches = load_completed_matches(SCHEDULE_CSV)
-    print(f"Completed matches to process: {len(matches)}")
+    if USE_SUPABASE:
+        import db
+        season_id = db.get_or_create_season()
+        matches = db.get_completed_matches_without_timeline(season_id)
+        print(f"Completed matches without timeline (from Supabase): {len(matches)}")
+    else:
+        matches = load_completed_matches(SCHEDULE_CSV)
+        print(f"Completed matches to process: {len(matches)}")
 
     fetched = 0
     skipped = 0
@@ -66,21 +73,31 @@ def main():
 
     for i, match in enumerate(matches, 1):
         event_id = match["sport_event_id"]
+        schedule_id = match.get("id")  # Present when from Supabase
         out_path = cache_path(event_id)
 
-        if os.path.exists(out_path):
+        if USE_SUPABASE:
+            skip = False  # We only got matches without timeline
+        else:
+            skip = os.path.exists(out_path)
+
+        if skip:
             skipped += 1
             continue
 
-        home = match["home_team"]
-        away = match["away_team"]
-        date = match["start_time"][:10]
+        home = match.get("home_team", "")
+        away = match.get("away_team", "")
+        start_time = match.get("start_time", "")
+        date = str(start_time)[:10] if start_time else "?"
         print(f"[{i}/{len(matches)}] Fetching {date}  {home} vs {away}  ({event_id})")
 
         try:
             data = fetch_timeline(event_id)
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False)
+            if USE_SUPABASE and schedule_id:
+                db.upsert_timeline(schedule_id, data)
+            if not USE_SUPABASE:
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False)
             fetched += 1
         except urllib.error.HTTPError as e:
             print(f"  HTTP {e.code} — skipping")
@@ -95,7 +112,10 @@ def main():
     print(f"  Newly fetched : {fetched}")
     print(f"  Already cached: {skipped}")
     print(f"  Errors        : {errors}")
-    print(f"\nTimelines saved in: {TIMELINES_DIR}/")
+    if USE_SUPABASE:
+        print(f"  Timelines saved to Supabase match_timelines table")
+    else:
+        print(f"\nTimelines saved in: {TIMELINES_DIR}/")
 
 
 if __name__ == "__main__":

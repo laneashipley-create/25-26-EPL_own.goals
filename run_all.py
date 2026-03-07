@@ -13,7 +13,7 @@ import step3_fetch_timelines
 import step4_extract_own_goals
 import generate_report
 
-DIVIDER = "─" * 60
+DIVIDER = "-" * 60
 
 def section(title: str):
     print(f"\n{DIVIDER}")

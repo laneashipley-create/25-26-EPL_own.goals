@@ -1,1 +1,2 @@
-# EPL Own Goals — uses Python stdlib only, no pip packages
+# EPL Own Goals 25/26 — optional Supabase backend
+supabase>=2.0.0
