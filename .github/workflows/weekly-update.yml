@@ -51,6 +51,10 @@ jobs:
         run: |
           python build_email_summary.py .tmp/previous_own_goals.csv data/own_goals.csv .tmp/email_summary.html
 
+      - name: Build final email body
+        run: |
+          python build_email_body.py .tmp/email_summary.html .tmp/email_body.html
+
       - name: Convert logo SVG to PNG (for Outlook/Gmail compatibility)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
@@ -72,14 +76,10 @@ jobs:
         env:
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
         run: |
-          REPORT_URL="https://laneashipley-create.github.io/25-26-EPL_own.goals/report.html"
-          IMG_URL="https://laneashipley-create.github.io/25-26-EPL_own.goals/assets/lanes_sportsdata.png"
           SENDER_NAME="Lane's SportsData Bot"
           BODY=$(jq -n \
-            --arg url "$REPORT_URL" \
-            --arg img "$IMG_URL" \
             --arg sender "$SENDER_NAME" \
-            --rawfile summary ".tmp/email_summary.html" \
+            --rawfile html ".tmp/email_body.html" \
             '{
               sender: {name: $sender, email: "sportsdata@keepstagecoachfree.com"},
               to: [
@@ -92,16 +92,7 @@ jobs:
                 {email: "p.cohn@sportradar.com"}
               ],
               subject: "25/26 - EPL Season // Own Goals Report — Weekly Update",
-              htmlContent:
-                (
-                  "<p>Esteemed Colleague,</p>"
-                  + "<p>Your weekly EPL own goals report has been updated.</p>"
-                  + $summary
-                  + "<p><a href=\"" + $url + "\">View the report</a></p>"
-                  + "<p>Kind Regards,</p>"
-                  + "<p>Lane's SportsData Bot</p>"
-                  + "<p><img src=\"" + $img + "\" alt=\"Lane's SportsData\" width=\"360\" style=\"max-width:360px;height:auto;display:block;\" /></p>"
-                )
+              htmlContent: $html
             }')
           curl -s -X POST "https://api.brevo.com/v3/smtp/email" \
             -H "api-key: $BREVO_API_KEY" \
