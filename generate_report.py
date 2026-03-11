@@ -105,7 +105,7 @@ def build_table_rows(rows: list[dict]) -> str:
             <div class="match-name">{match_label}</div>
             <div class="meta">{r['match_date']} &bull; {round_label}</div>
           </td>
-          <td class="id-cell" data-val="{r['sport_event_id']}" data-label="Match ID"><code title="{r['sport_event_id']}">{r['sport_event_id']}</code></td>
+          <td class="id-cell match-id-cell" data-val="{r['sport_event_id']}" data-label="Match ID"><code title="{r['sport_event_id']}">{r['sport_event_id']}</code></td>
           <td data-val="{r['og_player']}" data-label="Scorer">
             <div class="player-name">{display_name}</div>
             <div class="meta">{r['og_player_team']}</div>
@@ -350,7 +350,7 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
     }}
     col.c-num        {{ width: 2%; }}
     col.c-match      {{ width: 13%; }}
-    col.c-matchid    {{ width: 8%; }}
+    col.c-matchid    {{ width: 14%; }}
     col.c-scorer     {{ width: 11%; }}
     col.c-playerid   {{ width: 8%; }}
     col.c-min        {{ width: 4%; }}
@@ -358,7 +358,7 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
     col.c-score      {{ width: 5%; }}
     col.c-final      {{ width: 5%; }}
     col.c-ogmention  {{ width: 5%; }}
-    col.c-commentary {{ width: 30%; }}
+    col.c-commentary {{ width: 24%; }}
 
     thead tr {{
       background: #1a0000;
@@ -451,6 +451,11 @@ def generate_html(rows: list[dict], completed_matches: int, timeline_events: int
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }}
+    .match-id-cell code {{
+      font-size: 0.62rem;
+      overflow: visible;
+      text-overflow: clip;
     }}
     td.og-yes {{ text-align: center; color: #1a7a1a; font-weight: 700; font-size: 0.82rem; }}
     td.og-no  {{ text-align: center; color: #cc0000; font-weight: 700; font-size: 0.82rem; }}
