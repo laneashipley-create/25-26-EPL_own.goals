@@ -80,7 +80,7 @@ The report is hosted at **https://laneashipley-create.github.io/25-26-EPL_own.go
 
 ### Weekly Email (Brevo)
 
-After the weekly workflow runs at `1:00 AM UTC` on Wednesdays, the email arrives Tuesday evening in San Francisco and is sent via Brevo.
+After the weekly workflow runs at `1:07 AM UTC` on Wednesdays, the email arrives Tuesday evening in San Francisco and is sent via Brevo.
 
 **Setup:**
 1. Add **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
